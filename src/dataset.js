@@ -1,14 +1,32 @@
-const { execSync } = require("child_process");
+const express = require('express')
+var router = express.Router()
 
-async function getData(name) {
-  var str = execSync(`zfs get all -H -o property,value ${name}`).toString().split("\n");
-  str.pop();
-  var result = {};
-  str.map((line) => {
-    let tmp = line.split("\t");
-    result[tmp[0]] = tmp[1];
-  });
-  return result;
-}
+const zfs = require('./zfs')
 
-module.exports.getData = getData;
+router.get('/', (req, res) => {
+  zfs.list().then(
+    (list) => {
+      res.status(200).json(list)
+    },
+    (err) => {
+      res.status(500).send(err.message)
+    }
+  )
+})
+
+zfs.list().then((datasets) => {
+  datasets.forEach((dataset) => {
+    router.get(`/${dataset}`, (req, res) => {
+      zfs.get(req.url.slice(1), req.query.p).then(
+        (dataset_info) => {
+          res.status(200).json(dataset_info)
+        },
+        (err) => {
+          res.status(500).send(err.message)
+        }
+      )
+    })
+  })
+})
+
+module.exports = router;

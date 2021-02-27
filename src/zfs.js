@@ -1,18 +1,44 @@
 const { execSync } = require("child_process");
-const dataset = require("./dataset");
+const { stderr } = require("process");
 
-async function getDatasets() {
-  const dss = execSync("zfs list -H -o name").toString().split("\n");
-  dss.pop();
-  
-  var dssInfo = [];
-  dss.map((ds) => {
-    dssInfo.push(dataset.getData(ds));
-  });
+/**
+ * 
+ * @param {String} dataset
+ * @param {Array} properties 
+ */
+async function get(dataset, properties=[]) {
+  if (properties.length == 0) {
+    properties.push("all")
+  }
 
-  dssInfo = await Promise.all(dssInfo);
+  var result = {}
 
-  return dssInfo;
+  try {
+    lines = execSync(`zfs get -H -o property,value ${properties} ${dataset}`, {stdio: ['pipe','null']}).toString().split('\n')
+  } catch (error) {
+    throw new Error(`could not get properties "${properties}" of dataset "${dataset}"`)
+  }
+
+  lines.pop() // drop new line at end of result
+
+  // parse columns
+  lines.forEach((line) => {
+    let pair = line.split('\t')
+    result[pair[0]] = pair[1]
+  })
+
+  return result
 }
 
-module.exports.getDatasets = getDatasets;
+/**
+ * 
+ * @param {String} type 
+ */
+async function list(type="dataset") {
+  var ret = execSync(`zfs list -H -o name`, {stdio: ['pipe','null']}).toString().split('\n')
+  ret.pop() // drop new line
+  return ret
+}
+
+module.exports.get = get
+module.exports.list = list
