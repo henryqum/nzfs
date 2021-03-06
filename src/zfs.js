@@ -40,5 +40,20 @@ async function list(dataset="", type="filesystem") {
   return ret
 }
 
+async function create(filesystem, opts={}) {
+  var ret = execSync(`zfs create ${filesystem}`)
+}
+
+async function destroy(dataset, opts={}) {
+  execSync(`zfs destroy ${dataset}`)
+}
+
+async function snapshot(name, opts={}) {
+  execSync(`zfs snapshot ${name}`)
+}
+
 module.exports.get = get
 module.exports.list = list
+module.exports.create = create
+module.exports.destroy = destroy
+module.exports.snapshot = snapshot
