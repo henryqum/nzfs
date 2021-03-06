@@ -14,18 +14,44 @@ router.get('/', (req, res) => {
   )
 })
 
-zfs.list().then((datasets) => {
-  datasets.forEach((dataset) => {
-    router.get(`/${dataset}`, (req, res) => {
-      zfs.get(req.url.slice(1), req.query.p).then(
-        (dataset_info) => {
-          res.status(200).json(dataset_info)
-        },
-        (err) => {
-          res.status(500).send(err.message)
-        }
-      )
+router.get('/:set(*)/snapshots/:snap(*)', (req, res) => {
+  let ds = req.params.set
+  let snap = req.params.snap
+
+  zfs.get(`${ds}@${snap}`).then((info) => {
+    console.log("success")
+    res.status(200).json(info)
+  }).catch((err) => {
+    console.log("failed")
+    res.status(404).json({
+      error: true,
+      message: `Could not find snapshot "${snap}"`
     })
+  })
+})
+
+router.get('/:set(*)/snapshots', (req, res) => {
+  let ds = req.params.set
+
+  zfs.list(ds, "snapshot").then((list) => {
+    var modified = []
+    list.map((s) => {
+      modified.push(s.split('@')[1])
+    })
+    res.json(modified)
+  }).catch((err) => {
+    res.sendStatus(404)
+  })
+})
+
+router.get('/:set(*)', (req, res) => {
+  let ds = req.params.set
+  zfs.list(ds).then((list) => {
+    zfs.get(ds).then((info) => {
+      res.json(info)
+    })
+  }).catch((err) => {
+    res.sendStatus(404)
   })
 })
 

@@ -34,8 +34,8 @@ async function get(dataset, properties=[]) {
  * 
  * @param {String} type 
  */
-async function list(type="dataset") {
-  var ret = execSync(`zfs list -H -o name`, {stdio: ['pipe','null']}).toString().split('\n')
+async function list(dataset="", type="filesystem") {
+  var ret = execSync(`zfs list -H -o name -t ${type} ${dataset}`, {stdio: ['pipe','null']}).toString().split('\n')
   ret.pop() // drop new line
   return ret
 }
